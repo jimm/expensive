@@ -12,6 +12,11 @@
     <%= @check.description %>
   </li>
 
+  <li>
+    <strong>Notes:</strong>
+    <%= @check.notes %>
+  </li>
+
 </ul>
 
 <%= link "Edit", to: check_path(@conn, :edit, @check) %>

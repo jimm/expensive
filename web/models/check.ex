@@ -8,7 +8,7 @@ defmodule Expensive.Check do
     timestamps
   end
 
-  @required_fields ~w(description)
+  @required_fields ~w(description notes)
   @optional_fields ~w()
 
   @doc """

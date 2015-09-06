@@ -5,6 +5,7 @@
     <tr>
       <th>Transaction</th>
       <th>Description</th>
+      <th>Notes</th>
 
       <th></th>
     </tr>
@@ -14,6 +15,7 @@
     <tr>
       <td><%= check.transaction_id %></td>
       <td><%= check.description %></td>
+      <td><%= check.notes %></td>
 
       <td class="text-right">
         <%= link "Show", to: check_path(@conn, :show, check), class: "btn btn-default btn-xs" %>

@@ -18,12 +18,14 @@ defmodule Expensive.Router do
 
     get "/", PageController, :index
 
+    get "/import", ImportController, :index
+    post "/import/create", ImportController, :create
+
     resources "/categories", CategoryController
     resources "/category_regexes", CategoryRegexController
     resources "/transactions", TransactionController
     resources "/checks", CheckController
   end
-
 
   # Other scopes may use custom stacks.
   # scope "/api", Expensive do
