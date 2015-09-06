@@ -1,0 +1,6 @@
+<h2>New check</h2>
+
+<%= render "form.html", changeset: @changeset,
+                        action: check_path(@conn, :create) %>
+
+<%= link "Back", to: check_path(@conn, :index) %>

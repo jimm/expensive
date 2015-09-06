@@ -1,0 +1,28 @@
+<h2>Listing checks</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Transaction</th>
+      <th>Description</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for check <- @checks do %>
+    <tr>
+      <td><%= check.transaction_id %></td>
+      <td><%= check.description %></td>
+
+      <td class="text-right">
+        <%= link "Show", to: check_path(@conn, :show, check), class: "btn btn-default btn-xs" %>
+        <%= link "Edit", to: check_path(@conn, :edit, check), class: "btn btn-default btn-xs" %>
+        <%= link "Delete", to: check_path(@conn, :delete, check), method: :delete, data: [confirm: "Are you sure?"], class: "btn btn-danger btn-xs" %>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<%= link "New check", to: check_path(@conn, :new) %>

@@ -1,0 +1,18 @@
+<h2>Show category regex</h2>
+
+<ul>
+
+  <li>
+    <strong>Category:</strong>
+    <%= @category_regex.category_id %>
+  </li>
+
+  <li>
+    <strong>Regex:</strong>
+    <%= @category_regex.regex %>
+  </li>
+
+</ul>
+
+<%= link "Edit", to: category_regex_path(@conn, :edit, @category_regex) %>
+<%= link "Back", to: category_regex_path(@conn, :index) %>

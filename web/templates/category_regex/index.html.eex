@@ -1,0 +1,28 @@
+<h2>Listing category regexes</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Regex</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for category_regex <- @category_regexes do %>
+    <tr>
+      <td><%= category_regex.category_id %></td>
+      <td><%= category_regex.regex %></td>
+
+      <td class="text-right">
+        <%= link "Show", to: category_regex_path(@conn, :show, category_regex), class: "btn btn-default btn-xs" %>
+        <%= link "Edit", to: category_regex_path(@conn, :edit, category_regex), class: "btn btn-default btn-xs" %>
+        <%= link "Delete", to: category_regex_path(@conn, :delete, category_regex), method: :delete, data: [confirm: "Are you sure?"], class: "btn btn-danger btn-xs" %>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<%= link "New category regex", to: category_regex_path(@conn, :new) %>

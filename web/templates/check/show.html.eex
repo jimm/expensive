@@ -1,0 +1,18 @@
+<h2>Show check</h2>
+
+<ul>
+
+  <li>
+    <strong>Transaction:</strong>
+    <%= @check.transaction_id %>
+  </li>
+
+  <li>
+    <strong>Description:</strong>
+    <%= @check.description %>
+  </li>
+
+</ul>
+
+<%= link "Edit", to: check_path(@conn, :edit, @check) %>
+<%= link "Back", to: check_path(@conn, :index) %>

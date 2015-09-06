@@ -1,0 +1,6 @@
+<h2>New category regex</h2>
+
+<%= render "form.html", changeset: @changeset,
+                        action: category_regex_path(@conn, :create) %>
+
+<%= link "Back", to: category_regex_path(@conn, :index) %>

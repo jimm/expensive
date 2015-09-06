@@ -1,0 +1,48 @@
+<h2>Show transaction</h2>
+
+<ul>
+
+  <li>
+    <strong>Year:</strong>
+    <%= @transaction.year %>
+  </li>
+
+  <li>
+    <strong>Month:</strong>
+    <%= @transaction.month %>
+  </li>
+
+  <li>
+    <strong>Day:</strong>
+    <%= @transaction.day %>
+  </li>
+
+  <li>
+    <strong>Amount:</strong>
+    <%= @transaction.amount %>
+  </li>
+
+  <li>
+    <strong>Description:</strong>
+    <%= @transaction.description %>
+  </li>
+
+  <li>
+    <strong>Type:</strong>
+    <%= @transaction.type %>
+  </li>
+
+  <li>
+    <strong>Notes:</strong>
+    <%= @transaction.notes %>
+  </li>
+
+  <li>
+    <strong>Category:</strong>
+    <%= @transaction.category_id %>
+  </li>
+
+</ul>
+
+<%= link "Edit", to: transaction_path(@conn, :edit, @transaction) %>
+<%= link "Back", to: transaction_path(@conn, :index) %>
