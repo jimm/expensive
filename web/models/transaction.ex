@@ -14,8 +14,8 @@ defmodule Expensive.Transaction do
     timestamps
   end
 
-  @required_fields ~w(year month day amount description type notes)
-  @optional_fields ~w()
+  @required_fields ~w(year month day amount description)
+  @optional_fields ~w(type notes)
 
   @doc """
   Creates a changeset based on the `model` and `params`.

@@ -1,5 +1,10 @@
 defmodule Expensive.Importer do
 
+  alias Expensive.Repo
+  alias Expensive.Category
+  alias Expensive.Check
+  alias Expensive.Transaction
+
   @category_names [             # Must be list (ordered)
     ["doctors", "Doctors"],
     ["education", "Education"],
@@ -16,39 +21,54 @@ defmodule Expensive.Importer do
   ]
 
   def transactions(file) do
-    stream = CSVLixir.read(file)
-    first_row = Stream.take(stream, 1)
-    transform_function = case first_row do
-      ["Date", "No.", "Description", "Debit", "Credit"] -> &type1_txn/1
-      ["Date", "No.", "Description", "Debit", "Credit", "Notes"] -> &type2_txn/1
-      ["Date", "CheckNum", "Description", "Withdrawal", "Deposit", "Additional Info", "Notes"] -> &type3_txn/1
-                         end
-    stream
-    |> Enum.map(&(Task.async(fn -> transform_function.(&1) end)))
-    |> Enum.map(&(Task.await(&1)))
+    transform_function = transform_func_from_headers(file)
+    CSVLixir.read(file)
+    |> Stream.map(&(Task.async(fn -> transform_function.(&1) end)))
+    |> Stream.map(&(Task.await(&1)))
+    |> Stream.run
     :ok
   end
 
   def checks(file) do
+    # TODO get category, assign to transaction
     CSVLixir.read(file)
     |> Enum.to_list
     :ok
   end
 
+  defp transform_func_from_headers(file) do
+    stream = CSVLixir.read(file)
+    first_row = stream
+    |> Stream.take(1)
+    |> Enum.to_list
+    |> List.first
+    case first_row do
+      ["Date", "No.", "Description", "Debit", "Credit"] -> &type1_txn/1
+      ["Date", "No.", "Description", "Debit", "Credit", "Notes"] -> &type2_txn/1
+      ["Date", "CheckNum", "Description", "Withdrawal", "Deposit", "Additional Info", "Notes"] -> &type3_txn/1
+    end
+  end
+
   defp date_to_ymd(date_str) do
-    mdy = Regex.run(~r{(\d\d?)/(\d\d?)/(\d\d\d\d)}i,
-                    date_str, capture: :all_but_first)
-    [String.to_integer(mdy[2]),
-     String.to_integer(mdy[0]),
-     String.to_integer(mdy[1])]
+    [m, d, y] = Regex.run(~r{(\d\d?)/(\d\d?)/(\d\d\d\d)}i,
+                          date_str, capture: :all_but_first)
+    [String.to_integer(y),
+     String.to_integer(m),
+     String.to_integer(d)]
   end
 
-  defp type1_txn([date, num, desc, debit, credit] = row) do
+  defp type1_txn(["Date", _num, _desc, _debit]), do: nil
+  defp type1_txn([date, num, desc, debit]) do
+    type1_txn([date, num, desc, debit, ""])
+  end
+
+  defp type1_txn(["Date", _num, _desc, _debit, _credit]), do: nil
+  defp type1_txn([date, _num, desc, debit, credit]) do
     [year, month, day] = date_to_ymd(date)
     amount = if debit == "" do
-      abs(String.to_integer(credit))
+      money_str_to_int(credit)
     else
-      abs(String.to_integer(debit))
+      - money_str_to_int(debit)
     end
 
     check_check = Regex.run(~r{^check \# (\d+)}i, desc, capture: :all_but_first)
@@ -58,26 +78,37 @@ defmodule Expensive.Importer do
       |> String.to_integer
 
       # TODO handle bad insert
-      case Repo.insert(%Expensive.Check{id: check_num, description: desc}) do
+      case Repo.insert(%Check{id: check_num, description: desc}) do
         {:ok, _model} -> :ok
         {:error, _changeset} -> :error
       end
     end
 
     # TODO handle bad insert
-    case Repo.insert(%Expensive.Transaction{year: year, month: month, day: day,
-                                            description: row[2], amount: amount}) do
+    case Repo.insert(%Transaction{year: year, month: month, day: day,
+                                  description: desc, amount: amount}) do
       {:ok, _model} -> :ok
       {:error, _changeset} -> :error
     end
   end
 
-  defp type2_txn([date, num, desc, debit, credit, notes] = row) do
+  defp type2_txn(["Date", _num, _desc, _debit]), do: nil
+  defp type2_txn([date, num, desc, debit]) do
+    type2_txn([date, num, desc, debit, "", ""])
+  end
+
+  defp type2_txn(["Date", _num, _desc, _debit, _credit]), do: nil
+  defp type2_txn([date, _num, _desc, _debit, _credit]) do
+    type2_txn([date, _num, _desc, _debit, _credit, ""])
+  end
+
+  defp type2_txn(["Date", _num, _desc, _debit, _credit, _notes]), do: nil
+  defp type2_txn([date, num, desc, debit, credit, notes]) do
     [year, month, day] = date_to_ymd(date)
     amount = if debit == "" do
-      abs(String.to_integer(credit))
+      money_str_to_int(credit)
     else
-      abs(String.to_integer(debit))
+      - money_str_to_int(debit)
     end
 
     check_check = Regex.run(~r{^check \# (\d+)}i, desc, capture: :all_but_first)
@@ -87,62 +118,83 @@ defmodule Expensive.Importer do
       |> String.to_integer
 
       # TODO handle bad insert
-      case Repo.insert(%Expensive.Check{id: check_num, description: desc}) do
-        {:ok, _model} -> :ok
-        {:error, _changeset} -> :error
-      end
-    end
-
-    # TODO category from notes
-
-    # TODO handle bad insert
-    case Repo.insert(%Expensive.Transaction{year: year, month: month, day: day,
-                                            description: row[2], amount: amount}) do
-      {:ok, _model} -> :ok
-      {:error, _changeset} -> :error
-    end
-  end
-
-  defp type3_txn([date, desc, debit, credit, addl_info, notes] = row) do
-    [year, month, day] = date_to_ymd(date)
-    amount = if debit == "" do
-      abs(String.to_integer(credit))
-    else
-      abs(String.to_integer(debit))
-    end
-
-    check_check = Regex.run(~r{^check \# (\d+)}i, desc, capture: :all_but_first)
-    if check_check do
-      check_num = check_check
-      |> List.first
-      |> String.to_integer
-
-      # TODO handle bad insert
-      case Repo.insert(%Expensive.Check{id: check_num, description: desc}) do
+      case Repo.insert(%Check{id: check_num, description: desc}) do
         {:ok, _model} -> :ok
         {:error, _changeset} -> :error
       end
     end
 
     # TODO category from notes
-    # TODO type
 
     # TODO handle bad insert
-    case Repo.insert(%Expensive.Transaction{year: year, month: month, day: day,
-                                            description: row[2], amount: amount}) do
+    case Repo.insert(%Transaction{year: year, month: month, day: day,
+                                  description: desc, amount: amount}) do
       {:ok, _model} -> :ok
       {:error, _changeset} -> :error
     end
   end
 
+  defp type3_txn(["Date", _check_num, _type, _debit, _credit, _desc]), do: nil
+  defp type3_txn([date, check_num, type, debit, credit, desc]) do
+    type3_txn([date, check_num, type, debit, credit, desc, ""])
+  end
+  defp type3_txn(["Date", _check_num, _type, _debit, _credit, _desc, _notes]), do: nil
+  defp type3_txn([date, check_num, type, debit, credit, desc, notes]) do
+    [year, month, day] = date_to_ymd(date)
+    amount = if debit == "" do
+      money_str_to_int(credit)
+    else
+      - money_str_to_int(debit)
+    end
+
+    if desc == "CHECK" || desc == "OTC CASHED CHECK" do
+      # TODO handle bad insert
+      case Repo.insert(%Check{id: String.to_integer(check_num), description: desc}) do
+        {:ok, _model} -> :ok
+        {:error, _changeset} -> :error
+      end
+    end
+
+
+    # TODO handle bad insert
+    category_id = assign_category(notes)
+    case Repo.insert(%Transaction{year: year, month: month, day: day,
+                                  description: desc, amount: amount,
+                                  type: type, category_id: category_id}) do
+      {:ok, _model} -> :ok
+      {:error, _changeset} -> :error
+    end
+  end
+
+  defp assign_category(), do: nil
   defp assign_category(category_text) do
-    if category_text == "", do: return nil
-      
-    # TODO
-    # @category_names
-    # |> Enum.map(&())
-    # |> Enum.filter(&(&1 != nil))
-    # |> List.first  
-    nil
+    name = @category_names
+    |> Enum.map(&(category_name_matches?(&1, category_text)))
+    |> Enum.drop_while(&(&1 == nil))
+    |> Enum.take(1)
+    |> List.first
+
+    if name do
+      category = Repo.get_by(Category, description: name)
+      if category == nil do
+        {:ok, category} = Repo.insert(%Category{description: name})
+      end
+    end
+  end
+
+  defp category_name_matches?([key, val], category_text) when is_binary(key) do
+    IO.puts "cnm?(s) key = #{key}, category_text = #{category_text}" # DEBUG
+    if key == category_text, do: val, else: nil
+  end
+  defp category_name_matches?([key, val], category_text) do
+    IO.puts "cnm?(r) key = #{inspect(key)}, category_text = #{category_text}" # DEBUG
+    if Regex.match?(key, category_text), do: val, else: nil
+  end
+
+  # Turns money string into positive integer number of cents.
+  defp money_str_to_int(s) do
+    (String.to_float(s) * 10)
+    |> trunc
+    |> abs
   end
 end

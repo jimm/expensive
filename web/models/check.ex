@@ -3,13 +3,14 @@ defmodule Expensive.Check do
 
   schema "checks" do
     field :description, :string
+    field :notes, :string
     belongs_to :transaction, Expensive.Transaction
 
     timestamps
   end
 
-  @required_fields ~w(description notes)
-  @optional_fields ~w()
+  @required_fields ~w(description)
+  @optional_fields ~w(notes)
 
   @doc """
   Creates a changeset based on the `model` and `params`.
