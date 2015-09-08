@@ -8,10 +8,13 @@
     <h4>Links</h4>
     <ul>
       <li>
-        <a href="/categories">Categories</a>
+        <a href="/import">Import Transactions/Checks</a>
       </li>
       <li>
         <a href="/category_regexes">Category-Assigining Regular Expressions</a>
+      </li>
+      <li>
+        <a href="/categories">Categories</a>
       </li>
       <li>
         <a href="/transactions">Transactions</a>

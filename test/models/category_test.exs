@@ -15,4 +15,8 @@ defmodule Expensive.CategoryTest do
     changeset = Category.changeset(%Category{}, @invalid_attrs)
     refute changeset.valid?
   end
+
+  test "seeds loaded for tests" do
+    assert Repo.get_by(Category, description: "Doctors")
+  end
 end

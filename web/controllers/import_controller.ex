@@ -6,16 +6,16 @@ defmodule Expensive.ImportController do
   end
 
   def create(conn, params) do
-    errors = if params["transactions"] do
+    result = if params["transactions"] do
       Expensive.Importer.transactions(params["file"].path)
     else
       Expensive.Importer.checks(params["file"].path)
     end
-    case errors do
+    case result do
       :ok ->
         render conn, "index.html", %{errors: nil}
-      {:error, error_messages} ->
-        render conn, "index.html", %{errors: error_messages}
+      {:error, errors} ->
+        render conn, "index.html", %{errors: errors}
     end
   end
 end

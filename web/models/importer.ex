@@ -2,6 +2,7 @@ defmodule Expensive.Importer do
 
   alias Expensive.Repo
   alias Expensive.Category
+  alias Expensive.CategoryRegex
   alias Expensive.Check
   alias Expensive.Transaction
 
@@ -45,7 +46,7 @@ defmodule Expensive.Importer do
     case first_row do
       ["Date", "No.", "Description", "Debit", "Credit"] -> &type1_txn/1
       ["Date", "No.", "Description", "Debit", "Credit", "Notes"] -> &type2_txn/1
-      ["Date", "CheckNum", "Description", "Withdrawal", "Deposit", "Additional Info", "Notes"] -> &type3_txn/1
+      ["Date", "CheckNum", "Type", "Withdrawal", "Deposit", "Additional Info", "Notes"] -> &type3_txn/1
     end
   end
 
@@ -166,29 +167,14 @@ defmodule Expensive.Importer do
     end
   end
 
-  defp assign_category(), do: nil
   defp assign_category(category_text) do
-    name = @category_names
-    |> Enum.map(&(category_name_matches?(&1, category_text)))
-    |> Enum.drop_while(&(&1 == nil))
-    |> Enum.take(1)
-    |> List.first
-
-    if name do
-      category = Repo.get_by(Category, description: name)
-      if category == nil do
-        {:ok, category} = Repo.insert(%Category{description: name})
-      end
+    cr = CategoryRegex.find_matching(category_text)
+    if cr do
+      cr.category_id
+    else
+      {:ok, category} = Repo.insert(%Category{description: category_text})
+      category.id
     end
-  end
-
-  defp category_name_matches?([key, val], category_text) when is_binary(key) do
-    IO.puts "cnm?(s) key = #{key}, category_text = #{category_text}" # DEBUG
-    if key == category_text, do: val, else: nil
-  end
-  defp category_name_matches?([key, val], category_text) do
-    IO.puts "cnm?(r) key = #{inspect(key)}, category_text = #{category_text}" # DEBUG
-    if Regex.match?(key, category_text), do: val, else: nil
   end
 
   # Turns money string into positive integer number of cents.
