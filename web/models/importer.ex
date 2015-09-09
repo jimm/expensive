@@ -6,26 +6,12 @@ defmodule Expensive.Importer do
   alias Expensive.Check
   alias Expensive.Transaction
 
-  @category_names [             # Must be list (ordered)
-    ["doctors", "Doctors"],
-    ["education", "Education"],
-    ["taxes", "Taxes"],
-    ["Medical", "Doctors"],
-    [~r{taxes medical}, "Doctors"],
-    ["charity", "Charity"],
-    [~r{taxes charity}, "Charity"],
-    ["business", "Business"],
-    [~r{taxes business}, "Business"],
-    [~r{taxes house}, "House"],
-    [~r{tax preparation}, "House"],
-    [~r{taxes}, "Taxes"]
-  ]
-
   def transactions(file) do
     transform_function = transform_func_from_headers(file)
     CSVLixir.read(file)
-    |> Stream.map(&(Task.async(fn -> transform_function.(&1) end)))
-    |> Stream.map(&(Task.await(&1)))
+    |> Stream.map(&(transform_function.(&1)))
+    # |> Stream.map(&(Task.async(fn -> transform_function.(&1) end)))
+    # |> Stream.map(&(Task.await(&1)))
     |> Stream.run
     :ok
   end
@@ -33,7 +19,10 @@ defmodule Expensive.Importer do
   def checks(file) do
     # TODO get category, assign to transaction
     CSVLixir.read(file)
-    |> Enum.to_list
+    |> Stream.map(&save_check/1)
+    # |> Stream.map(&(Task.async(save_check(&1))))
+    # |> Stream.map(&(Task.await(&1)))
+    |> Stream.run
     :ok
   end
 
@@ -66,31 +55,16 @@ defmodule Expensive.Importer do
   defp type1_txn(["Date", _num, _desc, _debit, _credit]), do: nil
   defp type1_txn([date, _num, desc, debit, credit]) do
     [year, month, day] = date_to_ymd(date)
-    amount = if debit == "" do
-      money_str_to_int(credit)
-    else
-      - money_str_to_int(debit)
-    end
-
+    amount = txn_amount(debit, credit)
     check_check = Regex.run(~r{^check \# (\d+)}i, desc, capture: :all_but_first)
     if check_check do
       check_num = check_check
       |> List.first
       |> String.to_integer
-
-      # TODO handle bad insert
-      case Repo.insert(%Check{id: check_num, description: desc}) do
-        {:ok, _model} -> :ok
-        {:error, _changeset} -> :error
-      end
     end
-
-    # TODO handle bad insert
-    case Repo.insert(%Transaction{year: year, month: month, day: day,
-                                  description: desc, amount: amount}) do
-      {:ok, _model} -> :ok
-      {:error, _changeset} -> :error
-    end
+    Repo.insert!(%Transaction{year: year, month: month, day: day,
+                              description: desc, amount: amount,
+                              check_num: check_num})
   end
 
   defp type2_txn(["Date", _num, _desc, _debit]), do: nil
@@ -104,35 +78,20 @@ defmodule Expensive.Importer do
   end
 
   defp type2_txn(["Date", _num, _desc, _debit, _credit, _notes]), do: nil
-  defp type2_txn([date, num, desc, debit, credit, notes]) do
+  defp type2_txn([date, _num, desc, debit, credit, notes]) do
     [year, month, day] = date_to_ymd(date)
-    amount = if debit == "" do
-      money_str_to_int(credit)
-    else
-      - money_str_to_int(debit)
-    end
-
+    amount = txn_amount(debit, credit)
     check_check = Regex.run(~r{^check \# (\d+)}i, desc, capture: :all_but_first)
     if check_check do
       check_num = check_check
       |> List.first
       |> String.to_integer
-
-      # TODO handle bad insert
-      case Repo.insert(%Check{id: check_num, description: desc}) do
-        {:ok, _model} -> :ok
-        {:error, _changeset} -> :error
-      end
     end
-
-    # TODO category from notes
-
-    # TODO handle bad insert
-    case Repo.insert(%Transaction{year: year, month: month, day: day,
-                                  description: desc, amount: amount}) do
-      {:ok, _model} -> :ok
-      {:error, _changeset} -> :error
-    end
+    category_id = assign_category(notes)
+    Repo.insert!(%Transaction{year: year, month: month, day: day,
+                              description: desc, amount: amount,
+                              category_id: category_id,
+                              check_num: check_num})
   end
 
   defp type3_txn(["Date", _check_num, _type, _debit, _credit, _desc]), do: nil
@@ -142,45 +101,61 @@ defmodule Expensive.Importer do
   defp type3_txn(["Date", _check_num, _type, _debit, _credit, _desc, _notes]), do: nil
   defp type3_txn([date, check_num, type, debit, credit, desc, notes]) do
     [year, month, day] = date_to_ymd(date)
-    amount = if debit == "" do
-      money_str_to_int(credit)
-    else
-      - money_str_to_int(debit)
-    end
-
-    if desc == "CHECK" || desc == "OTC CASHED CHECK" do
-      # TODO handle bad insert
-      case Repo.insert(%Check{id: String.to_integer(check_num), description: desc}) do
-        {:ok, _model} -> :ok
-        {:error, _changeset} -> :error
-      end
-    end
-
-
-    # TODO handle bad insert
+    amount = txn_amount(debit, credit)
+    check_num = if Regex.match?(~r{CHECK|OTC CASHED CHECK}, type), do: String.to_integer(check_num), else: nil
     category_id = assign_category(notes)
-    case Repo.insert(%Transaction{year: year, month: month, day: day,
-                                  description: desc, amount: amount,
-                                  type: type, category_id: category_id}) do
-      {:ok, _model} -> :ok
-      {:error, _changeset} -> :error
-    end
+    Repo.insert!(%Transaction{year: year, month: month, day: day,
+                              description: desc, amount: amount,
+                              type: type, category_id: category_id,
+                              check_num: check_num})
   end
 
+  defp assign_category(nil), do: nil
+  defp assign_category(""), do: nil
   defp assign_category(category_text) do
     cr = CategoryRegex.find_matching(category_text)
     if cr do
       cr.category_id
     else
-      {:ok, category} = Repo.insert(%Category{description: category_text})
+      {:ok, category} = Repo.insert!(%Category{description: category_text})
       category.id
+    end
+  end
+
+  defp txn_amount(debit, credit) do
+    if debit == nil || debit == "" do
+      money_str_to_int(credit)
+    else
+      - money_str_to_int(debit)
     end
   end
 
   # Turns money string into positive integer number of cents.
   defp money_str_to_int(s) do
-    (String.to_float(s) * 10)
-    |> trunc
+    {f, _} = Float.parse(s)
+    f * 100
     |> abs
+    |> trunc
+  end
+
+  defp save_check([num, description, amount]), do: save_check([num, description, amount, nil])
+  defp save_check([num, description, amount, note]) do
+    check_num = String.to_integer(num)
+    check = Repo.get_by(Check, id: check_num)
+    txn = Repo.get_by(Transaction, check_num: check_num)
+
+    # Data integrity check
+    if txn do
+      amount_cents = money_str_to_int(amount)
+      true = (-amount_cents == txn.amount)
+    end
+
+    category_id = assign_category(note)
+    if check == nil do
+      Repo.insert!(%Check{id: String.to_integer(num),
+                          description: description,
+                          transaction_id: txn && txn.id,
+                          category_id: category_id, notes: note})
+    end
   end
 end

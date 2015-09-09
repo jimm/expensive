@@ -8,6 +8,7 @@ defmodule Expensive.Transaction do
     field :amount, :integer
     field :description, :string
     field :type, :string
+    field :check_num, :integer
     field :notes, :string
     belongs_to :category, Expensive.Category
 
@@ -15,7 +16,7 @@ defmodule Expensive.Transaction do
   end
 
   @required_fields ~w(year month day amount description)
-  @optional_fields ~w(type notes)
+  @optional_fields ~w(type check_num notes)
 
   @doc """
   Creates a changeset based on the `model` and `params`.

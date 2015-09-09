@@ -9,6 +9,7 @@ defmodule Expensive.Repo.Migrations.CreateTransaction do
       add :amount, :integer
       add :description, :string
       add :type, :text
+      add :check_num, :integer
       add :notes, :text
       add :category_id, references(:categories)
 

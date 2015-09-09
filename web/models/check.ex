@@ -5,6 +5,7 @@ defmodule Expensive.Check do
     field :description, :string
     field :notes, :string
     belongs_to :transaction, Expensive.Transaction
+    belongs_to :category, Expensive.Category
 
     timestamps
   end
