@@ -168,7 +168,7 @@ defmodule Expensive.Importer do
     end
   end
 
-  defp duplicate_transaction?(year, month, day, desc, amount, nil = check_num) do
+  defp duplicate_transaction?(year, month, day, desc, amount, nil = _check_num) do
     Repo.get_by(Transaction, year: year, month: month, day: day,
                 description: desc, amount: amount) != nil
   end

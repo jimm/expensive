@@ -22,7 +22,7 @@ defmodule Expensive.Check do
     if check.transaction_id, do: check.transaction.amount, else: nil
   end
 
-  def amount_str(%Expensive.Check{transaction_id: nil} = check), do: nil
+  def amount_str(%Expensive.Check{transaction_id: nil} = _check), do: nil
   def amount_str(check), do: "$#{Float.to_string(-check.transaction.amount/10.0, decimals: 2)}"
 
   @doc """

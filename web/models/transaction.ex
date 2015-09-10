@@ -41,5 +41,5 @@ defmodule Expensive.Transaction do
   end
 
   defp leading_zero(n) when n < 10, do: "0"
-  defp leading_zero(n), do: ""
+  defp leading_zero(_), do: ""
 end
