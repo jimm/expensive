@@ -78,3 +78,7 @@ form.link, form.button {
     border-bottom: 0;
   }
 }
+
+td.modelid, td.money {
+  text-align: right;
+}

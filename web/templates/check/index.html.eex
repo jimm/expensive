@@ -4,7 +4,9 @@
   <thead>
     <tr>
       <th>Transaction</th>
+      <th>Amount</th>
       <th>Description</th>
+      <th>Category</th>
       <th>Notes</th>
 
       <th></th>
@@ -13,8 +15,10 @@
   <tbody>
 <%= for check <- @checks do %>
     <tr>
-      <td><%= check.transaction_id %></td>
+      <td class="modelid"><%= if check.transaction_id, do: link(inspect(check.transaction_id), to: transaction_path(@conn, :show, check.transaction_id)) %></td>
+      <td class="money"><%= Expensive.Check.amount_str(check) %></td>
       <td><%= check.description %></td>
+      <td><%= if check.category_id, do: link(check.category.description, to: category_path(@conn, :show, check.category_id)) %></td>
       <td><%= check.notes %></td>
 
       <td class="text-right">
@@ -28,3 +32,5 @@
 </table>
 
 <%= link "New check", to: check_path(@conn, :new) %>
+<br/>
+<%= link "Import checks", to: import_path(@conn, :index) %>

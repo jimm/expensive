@@ -9,9 +9,8 @@ defmodule Expensive.Importer do
   def transactions(file) do
     transform_function = transform_func_from_headers(file)
     CSVLixir.read(file)
-    |> Stream.map(&(transform_function.(&1)))
-    # |> Stream.map(&(Task.async(fn -> transform_function.(&1) end)))
-    # |> Stream.map(&(Task.await(&1)))
+    |> Stream.map(&(Task.async(fn -> transform_function.(&1) end)))
+    |> Stream.map(&(Task.await(&1)))
     |> Stream.run
     :ok
   end
@@ -19,9 +18,8 @@ defmodule Expensive.Importer do
   def checks(file) do
     # TODO get category, assign to transaction
     CSVLixir.read(file)
-    |> Stream.map(&save_check/1)
-    # |> Stream.map(&(Task.async(save_check(&1))))
-    # |> Stream.map(&(Task.await(&1)))
+    |> Stream.map(fn(row) -> Task.async(fn -> save_check(row) end) end)
+    |> Stream.map(&(Task.await(&1)))
     |> Stream.run
     :ok
   end
@@ -62,9 +60,11 @@ defmodule Expensive.Importer do
       |> List.first
       |> String.to_integer
     end
-    Repo.insert!(%Transaction{year: year, month: month, day: day,
-                              description: desc, amount: amount,
-                              check_num: check_num})
+    if ! duplicate_transaction?(year, month, day, desc, amount, check_num) do
+      Repo.insert!(%Transaction{year: year, month: month, day: day,
+                                description: desc, amount: amount,
+                                check_num: check_num})
+    end
   end
 
   defp type2_txn(["Date", _num, _desc, _debit]), do: nil
@@ -88,10 +88,13 @@ defmodule Expensive.Importer do
       |> String.to_integer
     end
     category_id = assign_category(notes)
-    Repo.insert!(%Transaction{year: year, month: month, day: day,
-                              description: desc, amount: amount,
-                              category_id: category_id,
-                              check_num: check_num})
+    
+    if ! duplicate_transaction?(year, month, day, desc, amount, check_num) do
+      Repo.insert!(%Transaction{year: year, month: month, day: day,
+                                description: desc, amount: amount,
+                                category_id: category_id,
+                                check_num: check_num})
+    end
   end
 
   defp type3_txn(["Date", _check_num, _type, _debit, _credit, _desc]), do: nil
@@ -102,12 +105,18 @@ defmodule Expensive.Importer do
   defp type3_txn([date, check_num, type, debit, credit, desc, notes]) do
     [year, month, day] = date_to_ymd(date)
     amount = txn_amount(debit, credit)
-    check_num = if Regex.match?(~r{CHECK|OTC CASHED CHECK}, type), do: String.to_integer(check_num), else: nil
+    check_num = if check_num && check_num != "" && Regex.match?(~r{CHECK|OTC CASHED CHECK}, type) do
+      String.to_integer(check_num)
+    else
+      nil
+    end
     category_id = assign_category(notes)
-    Repo.insert!(%Transaction{year: year, month: month, day: day,
-                              description: desc, amount: amount,
-                              type: type, category_id: category_id,
-                              check_num: check_num})
+    if ! duplicate_transaction?(year, month, day, desc, amount, check_num) do
+      Repo.insert!(%Transaction{year: year, month: month, day: day,
+                                description: desc, amount: amount,
+                                type: type, category_id: category_id,
+                                check_num: check_num})
+    end
   end
 
   defp assign_category(nil), do: nil
@@ -117,7 +126,7 @@ defmodule Expensive.Importer do
     if cr do
       cr.category_id
     else
-      {:ok, category} = Repo.insert!(%Category{description: category_text})
+      category = Repo.insert!(%Category{description: category_text})
       category.id
     end
   end
@@ -157,5 +166,14 @@ defmodule Expensive.Importer do
                           transaction_id: txn && txn.id,
                           category_id: category_id, notes: note})
     end
+  end
+
+  defp duplicate_transaction?(year, month, day, desc, amount, nil = check_num) do
+    Repo.get_by(Transaction, year: year, month: month, day: day,
+                description: desc, amount: amount) != nil
+  end
+  defp duplicate_transaction?(year, month, day, desc, amount, check_num) do
+    Repo.get_by(Transaction, year: year, month: month, day: day,
+                description: desc, amount: amount, check_num: check_num) != nil
   end
 end

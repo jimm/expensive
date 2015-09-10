@@ -20,7 +20,8 @@
         <%= tag(:input, type: "hidden", name: "transactions", value: "1") %>
 
         <div class="form-group">
-          <%= tag(:input, type: "file", name: "file") %>
+          <label for="tfile">Transaction File</label>
+          <%= tag(:input, type: "file", id: "tfile", name: "file", class: "form-control") %>
         </div>
 
         <div class="form-group">
@@ -36,7 +37,8 @@
         <%= tag(:input, type: "hidden", name: "checks", value: "1") %>
 
         <div class="form-group">
-          <%= tag(:input, type: "file", name: "file") %>
+          <label for="cfile">Transaction File</label>
+          <%= tag(:input, type: "file", id: "cfile", name: "file", class: "form-control") %>
         </div>
 
         <div class="form-group">

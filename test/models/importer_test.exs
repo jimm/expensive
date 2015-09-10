@@ -8,33 +8,35 @@ defmodule Expensive.ImporterTest do
 
   test "load transactions, type 1" do
     assert :ok == Importer.transactions("test/models/transactions_1.csv")
-    assert [3] == Repo.all(from t in Transaction, select: count(t.id))
-    assert -3202 == Repo.get_by(Transaction, description: "Food Store").amount
-    assert -2509 == Repo.get_by(Transaction, description: "Gas Station").amount
-    assert 10000 == Repo.get_by(Transaction, description: "Deposit").amount
+    assert 3 == Repo.all(from t in Transaction, select: count(t.id)) |> hd
+    [[-3202, "Food Store"], [-2509, "Gas Station"], [10000, "Deposit"]]
+    |> Enum.map(&assert_amount_matches/1)
   end
 
   test "load transactions, type 2" do
     assert :ok == Importer.transactions("test/models/transactions_2.csv")
-    assert [4] == Repo.all(from t in Transaction, select: count(t.id))
-    assert  -8000 == Repo.get_by(Transaction, description: "A RESTAURANT").amount
-    assert  -1864 == Repo.get_by(Transaction, description: "ANOTHER RESTAURANT").amount
-    assert -40003 == Repo.get_by(Transaction, description: "CHECK # 3387 REF # 017909492").amount
-    assert  10000 == Repo.get_by(Transaction, description: "DEPOSIT").amount
+    assert 4 == Repo.all(from t in Transaction, select: count(t.id)) |> hd
+    [[-8000, "A RESTAURANT"], [-1864, "ANOTHER RESTAURANT"],
+     [-40003, "CHECK # 3387 REF # 017909492"], [10000, "DEPOSIT"]]
+    |> Enum.map(&assert_amount_matches/1)
   end
 
   test "load transactions, type 3" do
     assert :ok == Importer.transactions("test/models/transactions_3.csv")
-    assert [4] == Repo.all(from t in Transaction, select: count(t.id))
-    assert 123456 == Repo.get_by(Transaction, description: "PAY").amount
-    assert  -9033 == Repo.get_by(Transaction, description: "MONTHLY BILL").amount
-    assert  -7500 == Repo.get_by(Transaction, check_num: 4182).amount
-    assert -17500 == Repo.get_by(Transaction, check_num: 4217).amount
+    assert 4 == Repo.all(from t in Transaction, select: count(t.id)) |> hd
+    [[123456, "PAY"], [-9033, "MONTHLY BILL"]] |> Enum.map(&assert_amount_matches/1)
+    [[-7500, 4182], [-17500, 4217]] |> Enum.map(&assert_check_amount_matches/1)
+  end
+
+  test "do not create duplicate transactions" do
+    assert :ok == Importer.transactions("test/models/transactions_3.csv")
+    assert :ok == Importer.transactions("test/models/transactions_3.csv")
+    assert 4 == Repo.all(from t in Transaction, select: count(t.id)) |> hd
   end
 
   test "load checks" do
     assert :ok == load_all_transactions_and_checks
-    assert [4] == Repo.all(from c in Check, select: count(c.id))
+    assert 4 == Repo.all(from c in Check, select: count(c.id)) |> hd
     assert Repo.get_by(Check, id: 3387)
   end
 
@@ -46,15 +48,29 @@ defmodule Expensive.ImporterTest do
     assert txn.description =~ ~r{CHECK # 3387}
   end
 
+  test "do not create duplicate checks" do
+    assert :ok == load_all_transactions_and_checks
+    assert :ok == Importer.checks("test/models/checks.csv")
+    assert 4 == Repo.all(from c in Check, select: count(c.id)) |> hd
+  end
+
   test "set categories" do
     load_all_transactions_and_checks
-    check = Repo.get_by(Check, id: 4217)
-    assert Repo.get_by(Category, description: "Doctors").id == check.category_id
+    check = Repo.get_by(Check, id: 4217) |> Repo.preload(:category)
+    assert Repo.get_by(Category, description: "Doctors") == check.category
+  end
+
+  defp assert_amount_matches([amt, desc]) do
+    assert amt == Repo.get_by(Transaction, description: desc).amount
+  end
+
+  defp assert_check_amount_matches([amt, desc]) do
+    assert amt == Repo.get_by(Transaction, check_num: desc).amount
   end
 
   defp load_all_transactions_and_checks do
     1..3
-    |> Enum.map(&(:ok == Importer.transactions("test/models/transactions_#{&1}.csv")))
-    Importer.checks("test/models/checks.csv")
+    |> Enum.map(&(:ok = Importer.transactions("test/models/transactions_#{&1}.csv")))
+    :ok = Importer.checks("test/models/checks.csv")
   end
 end

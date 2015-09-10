@@ -6,7 +6,7 @@ defmodule Expensive.TransactionController do
   plug :scrub_params, "transaction" when action in [:create, :update]
 
   def index(conn, _params) do
-    transactions = Repo.all(Transaction)
+    transactions = Transaction.all_preloaded
     render(conn, "index.html", transactions: transactions)
   end
 

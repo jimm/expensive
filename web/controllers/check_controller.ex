@@ -6,7 +6,7 @@ defmodule Expensive.CheckController do
   plug :scrub_params, "check" when action in [:create, :update]
 
   def index(conn, _params) do
-    checks = Repo.all(Check)
+    checks = Check.all_preloaded
     render(conn, "index.html", checks: checks)
   end
 
