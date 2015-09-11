@@ -1,6 +1,5 @@
 defmodule Expensive.Transaction do
   use Expensive.Web, :model
-  alias Expensive.Repo
 
   schema "transactions" do
     field :year, :integer

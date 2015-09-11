@@ -1,6 +1,5 @@
 defmodule Expensive.Check do
   use Expensive.Web, :model
-  alias Expensive.Repo
 
   schema "checks" do
     field :description, :string

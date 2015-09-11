@@ -29,7 +29,7 @@ defmodule Expensive.CategoryRegex do
   in the database. Returns `nil` if no match found.
   """
   def find_matching(str) do
-    Expensive.Repo.all(from cr in Expensive.CategoryRegex, order_by: cr.id)
+    Repo.all(from cr in __MODULE__, order_by: cr.id)
     |> Enum.filter(&(Regex.compile!(&1.regex) |> Regex.match? str))
     |> Enum.take(1)
     |> List.first

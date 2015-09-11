@@ -16,7 +16,6 @@ defmodule Expensive.Importer do
   end
 
   def checks(file) do
-    # TODO get category, assign to transaction
     CSVLixir.read(file)
     |> Stream.map(fn(row) -> Task.async(fn -> save_check(row) end) end)
     |> Stream.map(&(Task.await(&1)))
@@ -25,8 +24,7 @@ defmodule Expensive.Importer do
   end
 
   defp transform_func_from_headers(file) do
-    stream = CSVLixir.read(file)
-    first_row = stream
+    first_row = CSVLixir.read(file)
     |> Stream.take(1)
     |> Enum.to_list
     |> List.first
@@ -40,44 +38,56 @@ defmodule Expensive.Importer do
   defp date_to_ymd(date_str) do
     [m, d, y] = Regex.run(~r{(\d\d?)/(\d\d?)/(\d\d\d\d)}i,
                           date_str, capture: :all_but_first)
-    [String.to_integer(y),
-     String.to_integer(m),
-     String.to_integer(d)]
+    [String.to_integer(y), String.to_integer(m), String.to_integer(d)]
   end
 
-  defp type1_txn(["Date", _num, _desc, _debit]), do: nil
   defp type1_txn([date, num, desc, debit]) do
-    type1_txn([date, num, desc, debit, ""])
+    type1_txn([date, num, desc, debit, "", nil])
   end
 
-  defp type1_txn(["Date", _num, _desc, _debit, _credit]), do: nil
-  defp type1_txn([date, _num, desc, debit, credit]) do
-    [year, month, day] = date_to_ymd(date)
-    amount = txn_amount(debit, credit)
+  defp type1_txn(["Date", "No.", "Description", "Debit", "Credit"]), do: nil
+  defp type1_txn([date, num, desc, debit, credit]) do
+    type1_txn([date, num, desc, debit, credit, nil])
+  end
+
+  defp type1_txn([date, _num, desc, debit, credit, nil]) do
     check_check = Regex.run(~r{^check \# (\d+)}i, desc, capture: :all_but_first)
     if check_check do
       check_num = check_check
       |> List.first
       |> String.to_integer
     end
+    type1_txn(date, desc, debit, credit, check_num)
+  end
+  defp type1_txn([date, _num, desc, debit, credit, check_num]) when is_binary(check_num) do
+    type1_txn(date, desc, debit, credit, String.to_integer(check_num))
+  end
+  defp type1_txn([date, _num, desc, debit, credit, check_num]) do
+    type1_txn(date, desc, debit, credit, check_num)
+  end
+
+  defp type1_txn(date, desc, debit, credit, check_num) do
+    [year, month, day] = date_to_ymd(date)
+    amount = txn_amount(debit, credit)
     if ! duplicate_transaction?(year, month, day, desc, amount, check_num) do
       Repo.insert!(%Transaction{year: year, month: month, day: day,
                                 description: desc, amount: amount,
                                 check_num: check_num})
     end
+    if check_num do
+      save_check([check_num, desc, debit, nil])
+    end
   end
 
-  defp type2_txn(["Date", _num, _desc, _debit]), do: nil
   defp type2_txn([date, num, desc, debit]) do
     type2_txn([date, num, desc, debit, "", ""])
   end
 
-  defp type2_txn(["Date", _num, _desc, _debit, _credit]), do: nil
   defp type2_txn([date, _num, _desc, _debit, _credit]) do
     type2_txn([date, _num, _desc, _debit, _credit, ""])
   end
 
-  defp type2_txn(["Date", _num, _desc, _debit, _credit, _notes]), do: nil
+  defp type2_txn(["Date", "No.", "Description", "Debit", "Credit", "Notes"]), do: nil
   defp type2_txn([date, _num, desc, debit, credit, notes]) do
     [year, month, day] = date_to_ymd(date)
     amount = txn_amount(debit, credit)
@@ -101,7 +111,8 @@ defmodule Expensive.Importer do
   defp type3_txn([date, check_num, type, debit, credit, desc]) do
     type3_txn([date, check_num, type, debit, credit, desc, ""])
   end
-  defp type3_txn(["Date", _check_num, _type, _debit, _credit, _desc, _notes]), do: nil
+
+  defp type3_txn(["Date", "CheckNum", "Type", "Withdrawal", "Deposit", "Additional Info", "Notes"]), do: nil
   defp type3_txn([date, check_num, type, debit, credit, desc, notes]) do
     [year, month, day] = date_to_ymd(date)
     amount = txn_amount(debit, credit)
@@ -148,10 +159,13 @@ defmodule Expensive.Importer do
   end
 
   defp save_check([num, description, amount]), do: save_check([num, description, amount, nil])
+
+  defp save_check([num, description, amount, note]) when is_binary(num) do
+    save_check([String.to_integer(num), description, amount, note])
+  end
   defp save_check([num, description, amount, note]) do
-    check_num = String.to_integer(num)
-    check = Repo.get_by(Check, id: check_num)
-    txn = Repo.get_by(Transaction, check_num: check_num)
+    check = Repo.get_by(Check, id: num)
+    txn = Repo.get_by(Transaction, check_num: num)
 
     # Data integrity check
     if txn do
@@ -161,7 +175,7 @@ defmodule Expensive.Importer do
 
     category_id = assign_category(note)
     if check == nil do
-      Repo.insert!(%Check{id: String.to_integer(num),
+      Repo.insert!(%Check{id: num,
                           description: description,
                           transaction_id: txn && txn.id,
                           category_id: category_id, notes: note})

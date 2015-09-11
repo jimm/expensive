@@ -8,9 +8,16 @@ defmodule Expensive.ImporterTest do
 
   test "load transactions, type 1" do
     assert :ok == Importer.transactions("test/models/transactions_1.csv")
-    assert 3 == Repo.all(from t in Transaction, select: count(t.id)) |> hd
-    [[-3202, "Food Store"], [-2509, "Gas Station"], [10000, "Deposit"]]
+    assert 5 == Repo.all(from t in Transaction, select: count(t.id)) |> hd
+    [[-3202, "Food Store"], [-2509, "Gas Station"], [10000, "Deposit"],
+     [-1234, "Some Check"], [-5545, "Check # 334"]]
     |> Enum.map(&assert_amount_matches/1)
+  end
+
+  test "load transactions, type 1, creates checks" do
+    assert 0 = Repo.all(from c in Check, select: count(c.id)) |> hd
+    assert :ok == Importer.transactions("test/models/transactions_1.csv")
+    assert 2 = Repo.all(from c in Check, select: count(c.id)) |> hd
   end
 
   test "load transactions, type 2" do
@@ -36,7 +43,7 @@ defmodule Expensive.ImporterTest do
 
   test "load checks" do
     assert :ok == load_all_transactions_and_checks
-    assert 4 == Repo.all(from c in Check, select: count(c.id)) |> hd
+    assert 6 == Repo.all(from c in Check, select: count(c.id)) |> hd
     assert Repo.get_by(Check, id: 3387)
   end
 
@@ -51,7 +58,7 @@ defmodule Expensive.ImporterTest do
   test "do not create duplicate checks" do
     assert :ok == load_all_transactions_and_checks
     assert :ok == Importer.checks("test/models/checks.csv")
-    assert 4 == Repo.all(from c in Check, select: count(c.id)) |> hd
+    assert 6 == Repo.all(from c in Check, select: count(c.id)) |> hd
   end
 
   test "set categories" do
