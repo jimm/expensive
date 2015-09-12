@@ -2,6 +2,7 @@ defmodule Expensive.TransactionController do
   use Expensive.Web, :controller
 
   alias Expensive.Transaction
+  alias Expensive.Category
 
   plug :scrub_params, "transaction" when action in [:create, :update]
 
@@ -12,7 +13,8 @@ defmodule Expensive.TransactionController do
 
   def new(conn, _params) do
     changeset = Transaction.changeset(%Transaction{})
-    render(conn, "new.html", changeset: changeset)
+    render(conn, "new.html", changeset: changeset,
+           categories: Category.for_menu())
   end
 
   def create(conn, %{"transaction" => transaction_params}) do
@@ -36,7 +38,8 @@ defmodule Expensive.TransactionController do
   def edit(conn, %{"id" => id}) do
     transaction = Repo.get!(Transaction, id)
     changeset = Transaction.changeset(transaction)
-    render(conn, "edit.html", transaction: transaction, changeset: changeset)
+    render(conn, "edit.html", transaction: transaction, changeset: changeset,
+           categories: Category.for_menu())
   end
 
   def update(conn, %{"id" => id, "transaction" => transaction_params}) do

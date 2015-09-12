@@ -2,6 +2,7 @@ defmodule Expensive.CheckController do
   use Expensive.Web, :controller
 
   alias Expensive.Check
+  alias Expensive.Category
 
   plug :scrub_params, "check" when action in [:create, :update]
 
@@ -12,7 +13,8 @@ defmodule Expensive.CheckController do
 
   def new(conn, _params) do
     changeset = Check.changeset(%Check{})
-    render(conn, "new.html", changeset: changeset)
+    render(conn, "new.html", changeset: changeset,
+           categories: Category.for_menu())
   end
 
   def create(conn, %{"check" => check_params}) do
@@ -36,7 +38,8 @@ defmodule Expensive.CheckController do
   def edit(conn, %{"id" => id}) do
     check = Repo.get!(Check, id)
     changeset = Check.changeset(check)
-    render(conn, "edit.html", check: check, changeset: changeset)
+    render(conn, "edit.html", check: check, changeset: changeset,
+           categories: Category.for_menu())
   end
 
   def update(conn, %{"id" => id, "check" => check_params}) do
