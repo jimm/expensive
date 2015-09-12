@@ -37,7 +37,7 @@
         <%= tag(:input, type: "hidden", name: "checks", value: "1") %>
 
         <div class="form-group">
-          <label for="cfile">Transaction File</label>
+          <label for="cfile">Check File</label>
           <%= tag(:input, type: "file", id: "cfile", name: "file", class: "form-control") %>
         </div>
 

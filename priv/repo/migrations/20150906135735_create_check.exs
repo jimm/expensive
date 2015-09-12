@@ -3,9 +3,10 @@ defmodule Expensive.Repo.Migrations.CreateCheck do
 
   def change do
     create table(:checks) do
-      add :transaction_id, references(:transactions)
+      add :amount, :integer
       add :description, :text
       add :notes, :text
+      add :transaction_id, references(:transactions)
       add :category_id, references(:categories)
 
       timestamps

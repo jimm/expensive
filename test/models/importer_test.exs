@@ -44,7 +44,10 @@ defmodule Expensive.ImporterTest do
   test "load checks" do
     assert :ok == load_all_transactions_and_checks
     assert 6 == Repo.all(from c in Check, select: count(c.id)) |> hd
-    assert Repo.get_by(Check, id: 3387)
+    c = Repo.get_by(Check, id: 3387)
+    assert c
+    assert c.amount == 40003
+    assert c.description == "Something"
   end
 
   test "link checks to transactions" do

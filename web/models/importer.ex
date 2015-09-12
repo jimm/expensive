@@ -6,18 +6,27 @@ defmodule Expensive.Importer do
   alias Expensive.Check
   alias Expensive.Transaction
 
+  @doc """
+  Import `file`, which is a CSV containing my bank's transactions. Handles
+  multiple formats because my bank has changed its output format over time.
+  """
   def transactions(file) do
-    transform_function = transform_func_from_headers(file)
-    CSVLixir.read(file)
-    |> Stream.map(&(Task.async(fn -> transform_function.(&1) end)))
-    |> Stream.map(&(Task.await(&1)))
-    |> Stream.run
-    :ok
+    process_file(file, transform_func_from_headers(file))
   end
 
+  @doc """
+  Import `file`, which is a CSV containing check information. Links the
+  checks to the corresponding transactions.
+
+  Check files should be imported after the corresponding transaction files.
+  """
   def checks(file) do
+    process_file(file, &save_check/1)
+  end
+
+  defp process_file(file, row_func) do
     CSVLixir.read(file)
-    |> Stream.map(fn(row) -> Task.async(fn -> save_check(row) end) end)
+    |> Stream.map(fn(row) -> Task.async(fn -> row_func.(row) end) end)
     |> Stream.map(&(Task.await(&1)))
     |> Stream.run
     :ok
@@ -165,24 +174,24 @@ defmodule Expensive.Importer do
   end
   defp save_check([num, description, amount, note]) do
     check = Repo.get_by(Check, id: num)
-    txn = Repo.get_by(Transaction, check_num: num)
+    amount_cents = money_str_to_int(amount)
 
-    # Data integrity check
-    if txn do
-      amount_cents = money_str_to_int(amount)
+    txn = Repo.get_by(Transaction, check_num: num)
+    if txn do                   # Data integrity check
       true = (-amount_cents == txn.amount)
     end
 
     category_id = assign_category(note)
     if check == nil do
       Repo.insert!(%Check{id: num,
+                          amount: amount_cents,
                           description: description,
                           transaction_id: txn && txn.id,
                           category_id: category_id, notes: note})
     end
   end
 
-  defp duplicate_transaction?(year, month, day, desc, amount, nil = _check_num) do
+  defp duplicate_transaction?(year, month, day, desc, amount, nil) do
     Repo.get_by(Transaction, year: year, month: month, day: day,
                 description: desc, amount: amount) != nil
   end

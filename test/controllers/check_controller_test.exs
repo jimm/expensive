@@ -2,7 +2,7 @@ defmodule Expensive.CheckControllerTest do
   use Expensive.ConnCase
 
   alias Expensive.Check
-  @valid_attrs %{description: "some content"}
+  @valid_attrs %{amount: 12345, description: "some content"}
   @invalid_attrs %{}
 
   setup do

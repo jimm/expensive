@@ -2,6 +2,7 @@ defmodule Expensive.Check do
   use Expensive.Web, :model
 
   schema "checks" do
+    field :amount, :integer
     field :description, :string
     field :notes, :string
     belongs_to :transaction, Expensive.Transaction
@@ -10,19 +11,17 @@ defmodule Expensive.Check do
     timestamps
   end
 
-  @required_fields ~w(description)
+  @required_fields ~w(amount description)
   @optional_fields ~w(notes)
 
+  @doc """
+  Return all checks with preloaded categories and transactions.
+  """
   def all_preloaded do
     Repo.all(from c in __MODULE__, preload: [:category, :transaction])
   end
 
-  def amount(check) do
-    if check.transaction_id, do: check.transaction.amount, else: nil
-  end
-
-  def amount_str(%Expensive.Check{transaction_id: nil} = _check), do: nil
-  def amount_str(check), do: "$#{Float.to_string(-check.transaction.amount/10.0, decimals: 2)}"
+  def amount_str(check), do: "$#{Float.to_string(-check.amount/10.0, decimals: 2)}"
 
   @doc """
   Creates a changeset based on the `model` and `params`.

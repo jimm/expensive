@@ -3,7 +3,7 @@ defmodule Expensive.CheckTest do
 
   alias Expensive.Check
 
-  @valid_attrs %{description: "some content"}
+  @valid_attrs %{amount: 1023, description: "some content"}
   @invalid_attrs %{}
 
   test "changeset with valid attributes" do
