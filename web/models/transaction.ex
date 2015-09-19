@@ -18,10 +18,6 @@ defmodule Expensive.Transaction do
   @required_fields ~w(year month day amount description)
   @optional_fields ~w(type check_num notes)
 
-  def all_preloaded do
-    Repo.all(from c in __MODULE__, preload: [:category])
-  end
-
   def date_str(txn) do
     "#{txn.year}-#{leading_zero(txn.month)}#{txn.month}-#{leading_zero(txn.day)}#{txn.day}"
   end

@@ -55,11 +55,7 @@ defmodule Expensive.CategoryController do
 
   def delete(conn, %{"id" => id}) do
     category = Repo.get!(Category, id)
-
-    # Here we use delete! (with a bang) because we expect
-    # it to always work (and if it does not, it will raise).
     Repo.delete!(category)
-
     conn
     |> put_flash(:info, "Category deleted successfully.")
     |> redirect(to: category_path(conn, :index))

@@ -19,8 +19,6 @@ defmodule Expensive.Web do
   def model do
     quote do
       use Ecto.Model
-
-      alias Expensive.Repo
     end
   end
 

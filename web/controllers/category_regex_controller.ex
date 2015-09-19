@@ -55,11 +55,7 @@ defmodule Expensive.CategoryRegexController do
 
   def delete(conn, %{"id" => id}) do
     category_regex = Repo.get!(CategoryRegex, id)
-
-    # Here we use delete! (with a bang) because we expect
-    # it to always work (and if it does not, it will raise).
     Repo.delete!(category_regex)
-
     conn
     |> put_flash(:info, "Category regex deleted successfully.")
     |> redirect(to: category_regex_path(conn, :index))

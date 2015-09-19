@@ -15,12 +15,9 @@ defmodule Expensive.Check do
   @optional_fields ~w(notes)
 
   @doc """
-  Return all checks with preloaded categories and transactions.
+  Return the amount of `check`, which is in cents, as a string of the form
+  "$123.45".
   """
-  def all_preloaded do
-    Repo.all(from c in __MODULE__, preload: [:category, :transaction])
-  end
-
   def amount_str(check), do: "$#{Float.to_string(-check.amount/10.0, decimals: 2)}"
 
   @doc """

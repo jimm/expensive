@@ -10,11 +10,6 @@ defmodule Expensive.Category do
   @required_fields ~w(description)
   @optional_fields ~w()
 
-  def for_menu do
-    [{"", nil}] ++ (Repo.all(__MODULE__)
-                   |> Enum.map(&({&1.description, &1.id})))
-  end
-
   @doc """
   Creates a changeset based on the `model` and `params`.
 

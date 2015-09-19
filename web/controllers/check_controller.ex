@@ -3,18 +3,19 @@ defmodule Expensive.CheckController do
 
   alias Expensive.Check
   alias Expensive.Category
+  alias Expensive.Presenters.Category, as: CategoryPresenter
 
   plug :scrub_params, "check" when action in [:create, :update]
 
   def index(conn, _params) do
-    checks = Check.all_preloaded
+    checks = Repo.all(from c in Check, preload: [:category, :transaction])
     render(conn, "index.html", checks: checks)
   end
 
   def new(conn, _params) do
     changeset = Check.changeset(%Check{})
     render(conn, "new.html", changeset: changeset,
-           categories: Category.for_menu())
+           categories: CategoryPresenter.for_menu(Repo.all(Category)))
   end
 
   def create(conn, %{"check" => check_params}) do
@@ -27,7 +28,7 @@ defmodule Expensive.CheckController do
         |> redirect(to: check_path(conn, :index))
       {:error, changeset} ->
         render(conn, "new.html", changeset: changeset,
-               categories: Category.for_menu())
+               categories: CategoryPresenter.for_menu(Repo.all(Category)))
     end
   end
 
@@ -40,7 +41,7 @@ defmodule Expensive.CheckController do
     check = Repo.get!(Check, id)
     changeset = Check.changeset(check)
     render(conn, "edit.html", check: check, changeset: changeset,
-           categories: Category.for_menu())
+           categories: CategoryPresenter.for_menu(Repo.all(Category)))
   end
 
   def update(conn, %{"id" => id, "check" => check_params}) do
@@ -54,17 +55,13 @@ defmodule Expensive.CheckController do
         |> redirect(to: check_path(conn, :show, check))
       {:error, changeset} ->
         render(conn, "edit.html", check: check, changeset: changeset,
-               categories: Category.for_menu())
+               categories: CategoryPresenter.for_menu(Repo.all(Category)))
     end
   end
 
   def delete(conn, %{"id" => id}) do
     check = Repo.get!(Check, id)
-
-    # Here we use delete! (with a bang) because we expect
-    # it to always work (and if it does not, it will raise).
     Repo.delete!(check)
-
     conn
     |> put_flash(:info, "Check deleted successfully.")
     |> redirect(to: check_path(conn, :index))
