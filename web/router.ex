@@ -21,6 +21,10 @@ defmodule Expensive.Router do
     get "/import", ImportController, :index
     post "/import/create", ImportController, :create
 
+    get "/reports", ReportController, :index
+    get "/reports/budget", ReportController, :budget
+    get "/reports/taxes", ReportController, :taxes
+
     resources "/categories", CategoryController
     resources "/category_regexes", CategoryRegexController
     resources "/transactions", TransactionController

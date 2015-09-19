@@ -11,6 +11,9 @@
         <a href="/import">Import Transactions or Checks</a>
       </li>
       <li>
+        <a href="/reports">Reports</a>
+      </li>
+      <li>
         <a href="/category_regexes">Category-Assigining Regular Expressions</a>
       </li>
       <li>

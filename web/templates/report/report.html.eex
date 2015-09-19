@@ -1,0 +1,19 @@
+<h2><%= @heading %></h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Category</th>
+<%= for year <- @years do %>
+      <th><%= year %></ht>
+<%= end %>          
+    </tr>
+  </thead>
+  <tbody>
+<%= for datum <- @data do %>
+    <tr>
+      <td><%= inspect(datum) %></td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
