@@ -26,7 +26,8 @@ defmodule Expensive.CheckController do
         |> put_flash(:info, "Check created successfully.")
         |> redirect(to: check_path(conn, :index))
       {:error, changeset} ->
-        render(conn, "new.html", changeset: changeset)
+        render(conn, "new.html", changeset: changeset,
+               categories: Category.for_menu())
     end
   end
 
@@ -52,7 +53,8 @@ defmodule Expensive.CheckController do
         |> put_flash(:info, "Check updated successfully.")
         |> redirect(to: check_path(conn, :show, check))
       {:error, changeset} ->
-        render(conn, "edit.html", check: check, changeset: changeset)
+        render(conn, "edit.html", check: check, changeset: changeset,
+               categories: Category.for_menu())
     end
   end
 

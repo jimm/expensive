@@ -26,7 +26,8 @@ defmodule Expensive.TransactionController do
         |> put_flash(:info, "Transaction created successfully.")
         |> redirect(to: transaction_path(conn, :index))
       {:error, changeset} ->
-        render(conn, "new.html", changeset: changeset)
+        render(conn, "new.html", changeset: changeset,
+               categories: Category.for_menu())
     end
   end
 
@@ -52,7 +53,8 @@ defmodule Expensive.TransactionController do
         |> put_flash(:info, "Transaction updated successfully.")
         |> redirect(to: transaction_path(conn, :show, transaction))
       {:error, changeset} ->
-        render(conn, "edit.html", transaction: transaction, changeset: changeset)
+        render(conn, "edit.html", transaction: transaction, changeset: changeset,
+               categories: Category.for_menu())
     end
   end
 
