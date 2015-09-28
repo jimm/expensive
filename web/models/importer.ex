@@ -7,11 +7,13 @@ defmodule Expensive.Importer do
   alias Expensive.Importer.Type1
   alias Expensive.Importer.Type2
   alias Expensive.Importer.Type3
+  alias Expensive.Importer.Peoples
 
   @txn_parsers %{
-    Type1.header => &Type1.parse/1,
-    Type2.header => &Type2.parse/1,
-    Type3.header => &Type3.parse/1
+    Type1.header   => &Type1.parse/1,
+    Type2.header   => &Type2.parse/1,
+    Type3.header   => &Type3.parse/1,
+    Peoples.first_row => &Peoples.parse/1
   }
 
   @doc """
