@@ -65,18 +65,8 @@ defmodule Expensive.ImporterTest do
 
   test "link checks to transactions" do
     load_all_transactions_and_checks
-    check = Repo.get!(Check, 3387)
-    assert nil != check.transaction_id
-    txn = Repo.get!(Transaction, check.transaction_id)
-    assert txn.description =~ ~r{CHECK # 3387}
-  end
-
-  test "link checks to transactions, people's" do
-    load_all_transactions_and_checks
-    check = Repo.get!(Check, 4349)
-    assert nil != check.transaction_id
-    txn = Repo.get!(Transaction, check.transaction_id)
-    assert txn.description =~ ~r{CHECK}
+    [{3387, true}, {4182, true}, {4217, true}, {4218, false}, {4349, true}]
+    |> Enum.map(&check_check/1)
   end
 
   test "do not create duplicate checks" do
@@ -87,8 +77,8 @@ defmodule Expensive.ImporterTest do
 
   test "set categories" do
     load_all_transactions_and_checks
-    check = Repo.get!(Check, 4217) |> Repo.preload(:category)
-    assert Repo.get_by(Category, description: "Doctors") == check.category
+    check = Repo.get!(Check, 4217)
+    assert Repo.get_by(Category, description: "Doctors").id == check.category_id
   end
 
   defp assert_amount_matches([amt, desc]) do
@@ -104,5 +94,14 @@ defmodule Expensive.ImporterTest do
     |> Enum.map(&(:ok = Importer.transactions("test/models/transactions_#{&1}.csv")))
     :ok = Importer.transactions("test/models/peoples.csv")
     :ok = Importer.checks("test/models/checks.csv")
+  end
+
+  defp check_check({check_num, should_have_txn}) do
+    check = Repo.get!(Check, check_num)
+    if should_have_txn do
+      assert check.transaction_id != nil
+      txn = Repo.get!(Transaction, check.transaction_id)
+      assert txn.description == check.description
+    end
   end
 end

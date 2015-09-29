@@ -4,7 +4,7 @@ defmodule Expensive.CategoryRegexTest do
   alias Expensive.CategoryRegex
   alias Expensive.Category
 
-  @valid_attrs %{regex: "some content"}
+  @valid_attrs %{regex: "some content", category_id: Repo.get_by(Category, description: "Doctors").id}
   @invalid_attrs %{}
 
   test "changeset with valid attributes" do

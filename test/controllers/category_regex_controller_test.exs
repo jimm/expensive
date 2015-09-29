@@ -1,8 +1,10 @@
 defmodule Expensive.CategoryRegexControllerTest do
   use Expensive.ConnCase
 
+  alias Expensive.Category
   alias Expensive.CategoryRegex
-  @valid_attrs %{regex: "some content"}
+
+  @valid_attrs %{regex: "some content", category_id: Repo.get_by(Category, description: "Doctors").id}
   @invalid_attrs %{}
 
   setup do

@@ -50,27 +50,48 @@ defmodule Expensive.Importer do
     @txn_parsers[first_row]
   end
 
-  def save_check([num, description, amount]), do: save_check([num, description, amount, nil])
+  def save_check([num, description, amount]) do
+    save_check([num, description, amount, nil])
+  end
 
   def save_check([num, description, amount, note]) when is_binary(num) do
     save_check([String.to_integer(num), description, amount, note])
   end
   def save_check([num, description, amount, note]) do
-    existing_check = Repo.get(Check, num)
     amount_cents = money_str_to_int(amount)
 
+    # If there is a corresponding transaction, then sanity-check the amount
+    # and update the transaction's description to match this check's
+    # description.
     txn = Repo.get_by(Transaction, check_num: num)
-    if txn do                   # Data integrity check
-      true = (-amount_cents == txn.amount)
+    if txn do
+      true = (-amount_cents == txn.amount) # data integrity check
+      cset = Transaction.changeset(txn, %{description: description})
+      if cset.valid? do
+        Repo.update!(cset)
+      else
+        raise "invalid transaction changeset: #{cset.errors}"
+      end
     end
 
+    # Create or update.
     category_id = assign_category(note)
+    existing_check = Repo.get(Check, num)
     if existing_check == nil do
       Repo.insert!(%Check{id: num,
                           amount: amount_cents,
                           description: description,
                           transaction_id: txn && txn.id,
                           category_id: category_id, notes: note})
+    else
+      cset = Check.changeset(existing_check, %{description: description,
+                                               category_id: category_id,
+                                               notes: note})
+      if cset.valid? do
+        Repo.update!(cset)
+      else
+        raise "invalid check changeset: #{cset.errors}"
+      end
     end
   end
 end

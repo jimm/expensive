@@ -11,7 +11,7 @@ defmodule Expensive.CategoryRegex do
     timestamps
   end
 
-  @required_fields ~w(regex)
+  @required_fields ~w(regex category_id)
   @optional_fields ~w()
 
   @doc """

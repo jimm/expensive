@@ -12,7 +12,7 @@ defmodule Expensive.Check do
   end
 
   @required_fields ~w(amount description)
-  @optional_fields ~w(notes)
+  @optional_fields ~w(notes transaction_id category_id)
 
   @doc """
   Return the amount of `check`, which is in cents, as a string of the form

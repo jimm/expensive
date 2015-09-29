@@ -16,7 +16,7 @@ defmodule Expensive.Transaction do
   end
 
   @required_fields ~w(year month day amount description)
-  @optional_fields ~w(type check_num notes)
+  @optional_fields ~w(type check_num notes category_id)
 
   def date_str(txn) do
     "#{txn.year}-#{leading_zero(txn.month)}#{txn.month}-#{leading_zero(txn.day)}#{txn.day}"

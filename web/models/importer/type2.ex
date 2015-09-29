@@ -40,5 +40,8 @@ defmodule Expensive.Importer.Type2 do
                                 category_id: category_id,
                                 check_num: check_num})
     end
+    if check_num do
+      Expensive.Importer.save_check([check_num, desc, debit, nil])
+    end
   end
 end
