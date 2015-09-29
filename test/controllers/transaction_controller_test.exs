@@ -2,7 +2,7 @@ defmodule Expensive.TransactionControllerTest do
   use Expensive.ConnCase
 
   alias Expensive.Transaction
-  @valid_attrs %{amount: 42, day: 42, description: "some content", month: 42, notes: "some content", type: "some content", check_num: 1234, year: 42}
+  @valid_attrs %{amount: 42, day: 2, description: "some content", month: 8, notes: "some content", type: "some content", check_num: 1234, year: 2015}
   @invalid_attrs %{}
 
   setup do

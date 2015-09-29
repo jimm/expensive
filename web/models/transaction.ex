@@ -33,6 +33,10 @@ defmodule Expensive.Transaction do
   def changeset(model, params \\ :empty) do
     model
     |> cast(params, @required_fields, @optional_fields)
+    |> validate_number(:year, greater_than: 1900)
+    |> validate_number(:month, greater_than_or_equal_to: 1, less_than_or_equal_to: 12)
+    |> validate_number(:day, greater_than_or_equal_to: 1, less_than_or_equal_to: 31)
+    |> validate_length(:description, min: 1)
   end
 
   defp leading_zero(n) when n < 10, do: "0"
