@@ -26,6 +26,12 @@ defmodule Expensive.Importer.Peoples do
   def parse([date, check_num, type, debit, credit, desc]) do
     [year, month, day] = date_to_ymd(date)
     amount = txn_amount(debit, credit)
+    if check_num && check_num != "" && type == "CHECK" do
+      check_num = String.to_integer(check_num)
+      desc = type
+    else
+      check_num = nil
+    end
     if ! duplicate_transaction?(year, month, day, desc, amount, check_num) do
       Repo.insert!(%Transaction{year: year, month: month, day: day,
                                 description: desc, amount: amount,
@@ -34,8 +40,5 @@ defmodule Expensive.Importer.Peoples do
     if check_num do
       Expensive.Importer.save_check([check_num, desc, debit, nil])
     end
-  end
-  def parse(something_else) do
-    IO.puts "something_else = #{inspect something_else}" # DEBUG
   end
 end
