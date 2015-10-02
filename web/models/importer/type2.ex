@@ -18,8 +18,8 @@ defmodule Expensive.Importer.Type2 do
     parse([date, num, desc, debit, "", ""])
   end
 
-  def parse([date, _num, _desc, _debit, _credit]) do
-    parse([date, _num, _desc, _debit, _credit, ""])
+  def parse([date, num, desc, debit, credit]) do
+    parse([date, num, desc, debit, credit, ""])
   end
 
   def parse(@header), do: nil
