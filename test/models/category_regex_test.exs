@@ -18,18 +18,22 @@ defmodule Expensive.CategoryRegexTest do
   end
 
   test "finds matching" do
-    cr = CategoryRegex.find_matching("doctors")
+    cr = Repo.all(from cr in CategoryRegex, order_by: cr.id)
+         |> CategoryRegex.find_matching("doctors")
     assert nil != cr
     assert "Doctors" == Repo.get_by(Category, id: cr.category_id).description
   end
 
   test "finds another --- testing" do
-    cr = CategoryRegex.find_matching("taxes education")
+    cr = Repo.all(from cr in CategoryRegex, order_by: cr.id)
+         |> CategoryRegex.find_matching("taxes education")
     assert nil != cr
     assert "Education" == Repo.get_by(Category, id: cr.category_id).description
   end
 
   test "returns nil if not found" do
-    assert nil == CategoryRegex.find_matching("does not exist")
+    cr = Repo.all(from cr in CategoryRegex, order_by: cr.id)
+         |> CategoryRegex.find_matching("does_not_exist")
+    assert nil == cr
   end
 end

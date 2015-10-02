@@ -1,5 +1,6 @@
 defmodule Expensive.Importer.Common do
   
+  import Ecto.Query
   alias Expensive.Repo
   alias Expensive.Category
   alias Expensive.CategoryRegex
@@ -18,7 +19,8 @@ defmodule Expensive.Importer.Common do
   def assign_category(nil), do: nil
   def assign_category(""), do: nil
   def assign_category(category_text) do
-    cr = CategoryRegex.find_matching(category_text)
+    cr = Repo.all(from cr in CategoryRegex, order_by: cr.id)
+         |> CategoryRegex.find_matching(category_text)
     if cr do
       cr.category_id
     else

@@ -15,12 +15,16 @@ defmodule Expensive.CategoryRegex do
   @optional_fields ~w()
 
   @doc """
-  Finds the record matching `str`, if any. Must process rows in order,
-  because matches are order-dependent based on how they are ordered (by id)
-  in the database. Returns `nil` if no match found.
+
+  Finds the CategoryRegex record matching `str`, if any. The list of
+  cateogry_regexes should be sorted by the order in which they should be
+  applied for searching.
+
+  Returns `nil` if no match found.
+
   """
-  def find_matching(str) do
-    Repo.all(from cr in __MODULE__, order_by: cr.id)
+  def find_matching(category_regexes, str) do
+    category_regexes
     |> Enum.filter(&(Regex.compile!(&1.regex) |> Regex.match? str))
     |> Enum.take(1)
     |> List.first
