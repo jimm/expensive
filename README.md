@@ -47,6 +47,13 @@ I'm using this project to learn the
 - Export tax info
 - Export/display monthly and yearly spend individually and by category
 
+# To Do
+
+- **Fatal flaw**: if importing a check that does not yet have a transaction,
+  the transaction that comes along later will never be linked to the check
+  because the check table does not store the check number so we have no way
+  of finding it.
+
 # Phoenix
 
 To start your Phoenix app:
