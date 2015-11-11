@@ -30,5 +30,6 @@ defmodule Expensive.Check do
     model
     |> cast(params, @required_fields, @optional_fields)
     |> validate_length(:description, min: 1)
+    |> foreign_key_constraint(:category_id)
   end
 end

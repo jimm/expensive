@@ -37,6 +37,7 @@ defmodule Expensive.Transaction do
     |> validate_number(:month, greater_than_or_equal_to: 1, less_than_or_equal_to: 12)
     |> validate_number(:day, greater_than_or_equal_to: 1, less_than_or_equal_to: 31)
     |> validate_length(:description, min: 1)
+    |> foreign_key_constraint(:category_id)
   end
 
   defp leading_zero(n) when n < 10, do: "0"
