@@ -1,8 +1,6 @@
 defmodule Expensive.CategoryRegex do
 
   use Expensive.Web, :model
-  import Ecto.Query, only: [from: 2]
-  alias Expensive.Repo
 
   schema "category_regexes" do
     field :regex, :string

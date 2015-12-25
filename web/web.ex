@@ -18,7 +18,11 @@ defmodule Expensive.Web do
 
   def model do
     quote do
-      use Ecto.Model
+      use Ecto.Schema
+
+      import Ecto
+      import Ecto.Changeset
+      import Ecto.Query, only: [from: 1, from: 2]
     end
   end
 
@@ -27,10 +31,12 @@ defmodule Expensive.Web do
       use Phoenix.Controller
 
       alias Expensive.Repo
-      import Ecto.Model
+      import Ecto
       import Ecto.Query, only: [from: 1, from: 2]
 
       import Expensive.Router.Helpers
+      import Expensive.Gettext
+      import Expensive.Auth, only: [authenticate_user: 2]
     end
   end
 
@@ -45,12 +51,16 @@ defmodule Expensive.Web do
       use Phoenix.HTML
 
       import Expensive.Router.Helpers
+      import Expensive.ErrorHelpers
+      import Expensive.Gettext
     end
   end
 
   def router do
     quote do
       use Phoenix.Router
+
+      import Expensive.Auth, only: [authenticate_user: 2]
     end
   end
 
@@ -59,9 +69,9 @@ defmodule Expensive.Web do
       use Phoenix.Channel
 
       alias Expensive.Repo
-      import Ecto.Model
+      import Ecto
       import Ecto.Query, only: [from: 1, from: 2]
-
+      import Expensive.Gettext
     end
   end
 
