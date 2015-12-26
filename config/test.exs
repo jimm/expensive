@@ -9,13 +9,11 @@ config :expensive, Expensive.Endpoint,
 # Print only warnings and errors during test
 config :logger, level: :warn
 
-# Set a higher stacktrace during test
-config :phoenix, :stacktrace_depth, 20
-
 # Configure your database
 config :expensive, Expensive.Repo,
   adapter: Ecto.Adapters.Postgres,
   username: "postgres",
   password: "postgres",
   database: "expensive_test",
+  hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox

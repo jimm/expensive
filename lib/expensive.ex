@@ -10,7 +10,7 @@ defmodule Expensive do
       # Start the endpoint when the application starts
       supervisor(Expensive.Endpoint, []),
       # Start the Ecto repository
-      worker(Expensive.Repo, []),
+      supervisor(Expensive.Repo, []),
       # Here you could define other workers and supervisors as children
       # worker(Expensive.Worker, [arg1, arg2, arg3]),
     ]

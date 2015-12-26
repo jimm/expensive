@@ -19,6 +19,7 @@ config :expensive, Expensive.Endpoint,
   live_reload: [
     patterns: [
       ~r{priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$},
+      ~r{priv/gettext/.*(po)$},
       ~r{web/views/.*(ex)$},
       ~r{web/templates/.*(eex)$}
     ]
@@ -38,4 +39,5 @@ config :expensive, Expensive.Repo,
   username: "postgres",
   password: "postgres",
   database: "expensive_dev",
+  hostname: "localhost",
   pool_size: 10

@@ -36,6 +36,6 @@ defmodule Expensive.ConnCase do
       Ecto.Adapters.SQL.restart_test_transaction(Expensive.Repo, [])
     end
 
-    :ok
+    {:ok, conn: Phoenix.ConnTest.conn()}
   end
 end
