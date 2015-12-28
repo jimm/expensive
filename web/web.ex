@@ -36,7 +36,6 @@ defmodule Expensive.Web do
 
       import Expensive.Router.Helpers
       import Expensive.Gettext
-      import Expensive.Auth, only: [authenticate_user: 2]
     end
   end
 
@@ -59,8 +58,6 @@ defmodule Expensive.Web do
   def router do
     quote do
       use Phoenix.Router
-
-      import Expensive.Auth, only: [authenticate_user: 2]
     end
   end
 
