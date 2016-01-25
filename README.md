@@ -49,6 +49,8 @@ I'm using this project to learn the
 
 # To Do
 
+- Upgrade [Poison](https://github.com/devinus/poison) to 2.0.
+
 - **Fatal flaw**: if importing a check that does not yet have a transaction,
   the transaction that comes along later will never be linked to the check
   because the check table does not store the check number so we have no way
